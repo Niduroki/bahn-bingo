@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, make_response, url_
 from uuid import uuid4
 from string import ascii_lowercase
 from random import choice, shuffle
-from datetime import datetime
+from datetime import datetime, timedelta
 import db
 from reasons import reasons
 from itertools import product as carthesian_product
@@ -29,7 +29,6 @@ def create_squares(bingo_id, session):
     shuffled_reasons = reasons.copy()
     shuffle(shuffled_reasons)
     for x, y in carthesian_product([1, 2, 3, 4, 5], [1, 2, 3, 4, 5]):
-        print(f"x:{x}, y:{y}")
         if x == y == 3:
             cur = db.BingoSquares(
                 x_position=x, y_position=y, bingo_field_id=bingo_id,
@@ -46,8 +45,41 @@ def create_squares(bingo_id, session):
         session.commit()
 
 
-def check_bingo(session, id):
-    pass
+def check_bingo(session, field):
+    # check each row
+    for x in range(1, 6):
+        count = session.query(db.BingoSquares.check_time).filter(
+                db.BingoSquares.bingo_field == field, db.BingoSquares.x_position == x,
+                db.BingoSquares.check_time.isnot(None)
+        ).count()
+        if count == 5:
+            return True
+    # check each column
+    for y in range(1, 6):
+        count = session.query(db.BingoSquares.check_time).filter(
+            db.BingoSquares.bingo_field == field, db.BingoSquares.y_position == y,
+            db.BingoSquares.check_time.isnot(None)
+        ).count()
+        if count == 5:
+            return True
+    # check diagonal top left -> bottom right
+    count = session.query(db.BingoSquares.check_time).filter(
+        db.BingoSquares.bingo_field == field,
+        db.BingoSquares.x_position == db.BingoSquares.y_position,
+        db.BingoSquares.check_time.isnot(None)
+    ).count()
+    if count == 5:
+        return True
+    # check diagonal top right -> bottom left
+    count = session.query(db.BingoSquares.check_time).filter(
+        db.BingoSquares.bingo_field == field,
+        (6-db.BingoSquares.x_position) == db.BingoSquares.y_position
+        , db.BingoSquares.check_time.isnot(None)
+    ).count()
+    if count == 5:
+        return True
+
+    return False
 
 
 @app.route('/', methods=["get", "post"])
@@ -65,7 +97,7 @@ def index():
                 return response
             return redirect(url_for('.bingo_field', bingo_str=instance.link))
         else:
-            games = session.query(db.BingoField).order_by("score").all()
+            games = session.query(db.BingoField).order_by("score").all()[:5]
             return render_template("index.html", games=games)
     elif request.method == "POST":
         try:
@@ -118,7 +150,7 @@ def bingo_field(bingo_str):
             "field.html", bingo_uuid=bingo_str,
             quit_url=url_for('.bingo_quit', bingo_str=bingo_str),
             submit_url_base=url_for('.bingo_field', bingo_str=bingo_str)+"submit/",
-            authenticated=authenticated, squares=field,
+            authenticated=authenticated, squares=field, bingo=obj,
         )
 
 @app.route('/<link:bingo_str>/quit/')
@@ -169,8 +201,41 @@ def bingo_submit(bingo_str, x, y):
     square.check_time = datetime.now()
     session.commit()
 
+    if check_bingo(session, field):
+        field.finished = True
+        score = field.start_time - datetime.now()
+        field.score = int(1000000 / max(score.seconds//60, 1))
+        session.commit()
+
+    return "ajax ja"
+
+@app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/undo/')#, methods=["post"])
+def bingo_undo(bingo_str, x, y):
+    if not 1 <= x <= 5 or not 1 <= y <= 5:
+        return "fehler!"
+
+    session = db.Session()
+    try:
+        field = session.query(db.BingoField).filter_by(link=bingo_str).one()
+    except:
+        abort(404)
+
+    # check authentication via uuid-cookie
+    user_uuid = request.cookies.get("bingo_uuid")
+    if not (user_uuid is not None and user_uuid == field.uuid):
+        abort(403)
+
+    square = session.query(db.BingoSquares).filter_by(
+        bingo_field=field, x_position=x, y_position=y
+    ).one()
+
+    square.check_time = None
+    session.commit()
+
     return "ajax ja"
 
 @app.route('/highscores/')
 def highscores():
-    return render_template("highscores.html")
+    session = db.Session()
+    games = session.query(db.BingoField).order_by("score").all()
+    return render_template("highscores.html", games=games)
