@@ -17,12 +17,12 @@ reasons = [
     "Trickbetrüger im Zug",
     "Trompeter am Morgen",
     "Fußballspiel",
-    '"Verzögert sich … auf unbestimmte Zeit",
+    '"Verzögert sich […] auf unbestimmte Zeit"',
     "Personen im Gleis",
     "Notarzteinsatz am Gleis",
     "Kaputter Wagon (der leer ist aber mit fährt)",
     "Anzeigetafel: Bitte Durchsagen beachten",
     "Umgekehrte Wagenreihung",
     "Raucher im Nichtraucherbereich",
-    "Anschluss verpasst"
+    "Anschluss verpasst",
 ]
