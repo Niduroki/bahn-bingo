@@ -14,7 +14,7 @@ reasons = [
     "Überholung durch einen anderen Zug",
     "Zugstau",
     "Bettler im Zug",
-    "Trickbetrüger im Zug",
+    'Durchsage: "Trickbetrüger im Zug/Bahnhof"',
     "Trompeter am Morgen",
     "Fußballspiel",
     '"Verzögert sich […] auf unbestimmte Zeit"',
