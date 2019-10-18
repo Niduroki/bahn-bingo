@@ -1,2 +1,21 @@
-<a href="{{quit_url}}">{{quit_url}}</a>
+<a href="{{quit_url}}">Aufgeben</a>
 {{submit_url_base}}
+
+<table border="1">
+{% for y in range(5) %}
+    <tr>
+    {% for x in range(5) %}
+        <th height="100px">
+            {{ squares[x][y].content }}
+            {% if squares[x][y].check_time %}
+            Checked
+            {% endif %}
+            {% if authenticated %}
+                <br><a href="{{submit_url_base}}{{x}}/{{y}}">Check</a>
+            {% endif %}
+            <br>
+        </th>
+    {% endfor %}
+    </tr>
+{% endfor %}
+</table>
