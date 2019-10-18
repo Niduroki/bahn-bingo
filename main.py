@@ -176,9 +176,9 @@ def bingo_quit(bingo_str):
     obj.finished = True
     session.commit()
 
-    response = make_response(redirect('/'))
+    response = make_response(jsonify(data="success"))
     response.set_cookie(key="bingo_uuid", value="", expires=0)  # set cookie to expire
-    return response  # TODO doesn't update window.location
+    return response
 
 
 @app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/', methods=["post"])

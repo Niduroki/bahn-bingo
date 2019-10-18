@@ -1,5 +1,6 @@
 $(function(){
     $("div.bingo-square").bind("taphold", tapholdHandler);
+    $("#giveup").bind("taphold", giveupHandler);
 
     function tapholdHandler(event){
         if (event.target.classList.contains("checked")) {
@@ -30,6 +31,20 @@ $(function(){
                 },
                 type: "POST",
                 url: submit_url,
+            });
+        }
+    }
+
+    function giveupHandler(event){
+        if (confirm("Aufgeben, und Bingo-Feld beenden?")) {
+            var quit_url = event.target.dataset.quitUrl;
+            $.ajax({
+                success: function(data){
+                    document.cookie = "";
+                    window.location = "/";
+                },
+                type: "POST",
+                url: quit_url,
             });
         }
     }

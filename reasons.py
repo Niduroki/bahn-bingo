@@ -10,7 +10,7 @@ reasons = [
     "Wagen mit reservierten Plätzen wurde abgekoppelt",
     "Recklinghausen Süd",
     "Streik",
-    "Schienenersatzverkehr",
+    "Schienenersatz-Verkehr",
     "Überholung durch einen anderen Zug",
     "Zugstau",
     "Bettler im Zug",

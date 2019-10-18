@@ -1,9 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
-{% if authenticated %}
-<a href="{{quit_url}}">Aufgeben (+bestätigung fragen)</a>
-{% endif %}
-– {{ bingo.start_time.strftime("%d.%m.%y %H:%M Uhr") }} by {{ bingo.player_name }}
+<div id="info-row">
+    {% if authenticated %}
+        <button id="giveup" data-quit-url="{{quit_url}}" class="ui-btn ui-btn-inline">Aufgeben (+bestätigung)</button>
+    {% endif %}
+    Start-Zeit: {{ bingo.start_time.strftime("%d.%m.%y %H:%M Uhr") }} – Spieler: {{ bingo.player_name }}
+    {% if bingo.finished %}
+        – Bingo-Feld beendet.
+        {% if bingo.score %}
+            <strong>Punktzahl</strong>: {{ bingo.score }}
+        {% else %}
+            Keine Punkte.
+        {% endif %}
+    {% endif %}
+</div>
 
 {% for y in range(5) %}
 <div class="bingo-row">

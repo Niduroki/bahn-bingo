@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!--meta name="viewport" content="width=device-width, initial-scale=1"-->
         <link rel="stylesheet" href="/static/style.css">
         <link rel="stylesheet" href="/static/jquery.mobile.min.css">
         <script type="text/javascript" src="/static/jquery.min.js"></script>
@@ -11,7 +11,7 @@
     <body>
         <div data-role="page">
             <div data-role="header">
-                <h3><a href="/">D-Bakel Hauptseite</a></h3>
+                <h3><a href="/" data-ajax="false">D-Bakel Hauptseite</a></h3>
             </div>
             <div role="main" class="ui-content">
                 {% block content %}Missing content{% endblock %}
