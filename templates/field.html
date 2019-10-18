@@ -1,22 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<a href="{{quit_url}}">Aufgeben</a>
+<a href="{{quit_url}}">Aufgeben</a> – {{ bingo.start_time }} by {{ bingo.player_name }}
 
-<table border="1">
 {% for y in range(5) %}
-    <tr>
+<div class="bingo-row">
     {% for x in range(5) %}
-        <th height="100px">
+        <div class="bingo-square{% if squares[x][y].check_time %} checked{% endif %}">
             {{ squares[x][y].content }}
-            {% if squares[x][y].check_time %}
-                <br>Checked
-            {% elif authenticated %}
-                <br><a href="{{submit_url_base}}{{x+1}}/{{y+1}}">Check</a>
+            {% if squares[x][y].check_time and authenticated %}
+                <br><a href="{{submit_url_base}}{{x+1}}/{{y+1}}/undo/">Rückgängig</a>
+            {% elif not squares[x][y].check_time and authenticated %}
+                <br><a href="{{submit_url_base}}{{x+1}}/{{y+1}}/">Check</a>
             {% endif %}
             <br>
-        </th>
+        </div>
     {% endfor %}
-    </tr>
+</div>
 {% endfor %}
-</table>
 {% endblock %}

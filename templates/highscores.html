@@ -1,4 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-test
+    {% for game in games %}
+        <a href="/{{ game.link }}/">{{ game }}</a> – Score of {{ game.score }}<br>
+    {% endfor %}
 {% endblock %}
