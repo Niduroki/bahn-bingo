@@ -6,6 +6,7 @@ engine = create_engine('sqlite:///bingo.db')
 
 Base = declarative_base()
 
+
 class BingoField(Base):
     __tablename__ = "bingofield"
 
@@ -20,6 +21,7 @@ class BingoField(Base):
     def __repr__(self):
         return f"ID: {self.id}, Game by {self.player_name} with link {self.link}"
 
+
 class BingoSquares(Base):
     __tablename__ = "bingosquares"
 
@@ -33,10 +35,12 @@ class BingoSquares(Base):
     bingo_field = relationship("BingoField", back_populates="squares")
 
     def __repr__(self):
-        return f"ID: {self.id}, for field id: {self.bingo_field_id}, pos: " +\
-        f"{self.x_position}x{self.y_position}, check_time {self.check_time}"
+        return f"ID: {self.id}, for field id: {self.bingo_field_id}, pos: " + \
+            f"{self.x_position}x{self.y_position}, check_time {self.check_time}"
+
 
 BingoField.squares = relationship("BingoSquares", back_populates="bingo_field")
+
 
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
