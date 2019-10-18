@@ -16,7 +16,7 @@ class BingoField(Base):
     player_name = Column(String)
     start_time = Column(DateTime)
     finished = Column(Boolean)
-    score = Column(Integer)  # number of seconds
+    score = Column(Integer)  # 1.000.000/minutes taken
 
     def __repr__(self):
         return f"ID: {self.id}, Game by {self.player_name} with link {self.link}"
