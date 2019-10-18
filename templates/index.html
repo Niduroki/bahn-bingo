@@ -1,0 +1,9 @@
+<form method="post">
+  <input type="text" name="player_name">
+  <input type="submit" value="Push it!">
+</form>
+<br>
+games:<br>
+{% for game in games %}
+  <a href="/{{ game.link }}/">{{ game }}</a> – Score of {{ game.score }}<br>
+{% endfor %}
