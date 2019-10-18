@@ -65,7 +65,7 @@ def index():
                 return response
             return redirect(url_for('.bingo_field', bingo_str=instance.link))
         else:
-            games = session.query(db.BingoField).all()
+            games = session.query(db.BingoField).order_by("score").all()
             return render_template("index.html", games=games)
     elif request.method == "POST":
         try:
@@ -129,8 +129,13 @@ def bingo_quit(bingo_str):
     except:
         abort(404)
 
-    # authentification via uuid-cookie
-    authenticated = True
+    # authentication via uuid-cookie
+    user_uuid = request.cookies.get("bingo_uuid")
+    if user_uuid is not None and user_uuid == obj.uuid:
+        authenticated = True
+    else:
+        authenticated = False
+
     if not authenticated:
         abort(403)
 
@@ -141,17 +146,30 @@ def bingo_quit(bingo_str):
     response.set_cookie(key="bingo_uuid", value="", expires=0)  # set cookie to expire
     return response
 
-@app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/', methods=["post"])
+@app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/')#, methods=["post"])
 def bingo_submit(bingo_str, x, y):
     if not 1 <= x <= 5 or not 1 <= y <= 5:
         return "fehler!"
 
-    # authentification via uuid-cookie
-    authenticated = True
-    if not authenticated:
+    session = db.Session()
+    try:
+        field = session.query(db.BingoField).filter_by(link=bingo_str).one()
+    except:
+        abort(404)
+
+    # check authentication via uuid-cookie
+    user_uuid = request.cookies.get("bingo_uuid")
+    if not (user_uuid is not None and user_uuid == field.uuid):
         abort(403)
 
-    return "ajax, ja/nein"
+    square = session.query(db.BingoSquares).filter_by(
+        bingo_field=field, x_position=x, y_position=y
+    ).one()
+
+    square.check_time = datetime.now()
+    session.commit()
+
+    return "ajax ja"
 
 @app.route('/highscores/')
 def highscores():
