@@ -37,7 +37,6 @@ def create_squares(bingo_id, session):
             )
         else:
             reason = shuffled_reasons.pop()
-            print(reason)
             cur = db.BingoSquares(
                 x_position=x, y_position=y, bingo_field_id=bingo_id,
                 content=reason
