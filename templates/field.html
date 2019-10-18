@@ -1,21 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
-<a href="{{quit_url}}">Aufgeben</a> – {{ bingo.start_time }} by {{ bingo.player_name }}
+{% if authenticated %}
+<a href="{{quit_url}}">Aufgeben (+bestätigung fragen)</a>
+{% endif %}
+– {{ bingo.start_time.strftime("%d.%m.%y %H:%M Uhr") }} by {{ bingo.player_name }}
 
 {% for y in range(5) %}
 <div class="bingo-row">
     {% for x in range(5) %}
-        <div class="bingo-square{% if squares[x][y].check_time %} checked{% endif %}">
-            {{ squares[x][y].content }}
+        <div
+                id="square-{{x+1}}-{{y+1}}"
+                class="bingo-square{% if squares[x][y].check_time %} checked{% endif %}"
+                data-submit-url="{{submit_url_base}}{{x+1}}/{{y+1}}/"
+                data-undo-url="{{submit_url_base}}{{x+1}}/{{y+1}}/undo/"
+        >
+            <p>{{ squares[x][y].content }}</p>
             {% if squares[x][y].check_time %}
-                <br>Zeit: {{ squares[x][y].check_time.strftime("%d.%m.%y %H:%M Uhr") }}
+                <p>Zeit: {{ squares[x][y].check_time.strftime("%d.%m.%y %H:%M Uhr") }}</p>
             {% endif %}
-            {% if squares[x][y].check_time and authenticated %}
-                <br><a href="{{submit_url_base}}{{x+1}}/{{y+1}}/undo/">Rückgängig</a>
-            {% elif not squares[x][y].check_time and authenticated %}
-                <br><a href="{{submit_url_base}}{{x+1}}/{{y+1}}/">Check</a>
-            {% endif %}
-            <br>
         </div>
     {% endfor %}
 </div>
