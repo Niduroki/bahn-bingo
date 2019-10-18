@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, make_response, url_for, abort
+from flask import Flask, render_template, request, redirect, make_response, url_for, abort, jsonify
 from uuid import uuid4
 from string import ascii_lowercase
 from random import choice, shuffle
@@ -7,6 +7,7 @@ import db
 from reasons import reasons
 from itertools import product as carthesian_product
 from werkzeug.routing import BaseConverter
+from sqlalchemy.orm.exc import NoResultFound
 
 app = Flask(__name__)
 
@@ -91,7 +92,7 @@ def index():
                 instance = session.query(db.BingoField).filter_by(
                     uuid=request.cookies.get("bingo_uuid")
                 ).one()
-            except:
+            except NoResultFound:
                 response = make_response(url_for('.index'))
                 response.set_cookie(key="bingo_uuid", value="", expires=0)  # set cookie to expire
                 return response
@@ -129,7 +130,7 @@ def bingo_field(bingo_str):
     session = db.Session()
     try:
         obj = session.query(db.BingoField).filter_by(link=bingo_str).one()
-    except:
+    except NoResultFound:
         abort(404)
 
     user_uuid = request.cookies.get("bingo_uuid")
@@ -146,15 +147,12 @@ def bingo_field(bingo_str):
     for square in squares:
         field[square.x_position-1][square.y_position-1] = square
 
-    if 1 == 2:
-        pass
-    else:
-        return render_template(
-            "field.html", bingo_uuid=bingo_str,
-            quit_url=url_for('.bingo_quit', bingo_str=bingo_str),
-            submit_url_base=url_for('.bingo_field', bingo_str=bingo_str)+"submit/",
-            authenticated=authenticated, squares=field, bingo=obj,
-        )
+    return render_template(
+        "field.html", bingo_uuid=bingo_str,
+        quit_url=url_for('.bingo_quit', bingo_str=bingo_str),
+        submit_url_base=url_for('.bingo_field', bingo_str=bingo_str)+"submit/",
+        authenticated=authenticated, squares=field, bingo=obj,
+    )
 
 
 @app.route('/<link:bingo_str>/quit/')
@@ -162,7 +160,7 @@ def bingo_quit(bingo_str):
     session = db.Session()
     try:
         obj = session.query(db.BingoField).filter_by(link=bingo_str).one()
-    except:
+    except NoResultFound:
         abort(404)
 
     # authentication via uuid-cookie
@@ -183,15 +181,15 @@ def bingo_quit(bingo_str):
     return response
 
 
-@app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/')#, methods=["post"])
+@app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/', methods=["post"])
 def bingo_submit(bingo_str, x, y):
     if not 1 <= x <= 5 or not 1 <= y <= 5:
-        return "fehler!"
+        return jsonify(data="error")
 
     session = db.Session()
     try:
         field = session.query(db.BingoField).filter_by(link=bingo_str).one()
-    except:
+    except NoResultFound:
         abort(404)
 
     # check authentication via uuid-cookie
@@ -212,18 +210,20 @@ def bingo_submit(bingo_str, x, y):
         field.score = int(1000000 / max(score.seconds//60, 1))
         session.commit()
 
-    return "ajax ja"
+        return jsonify(data="finished", score=int(1000000 / max(score.seconds//60, 1)))
+
+    return jsonify(data="success", x=x, y=y)
 
 
-@app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/undo/')#, methods=["post"])
+@app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/undo/', methods=["post"])
 def bingo_undo(bingo_str, x, y):
     if not 1 <= x <= 5 or not 1 <= y <= 5:
-        return "fehler!"
+        return jsonify(data="error")
 
     session = db.Session()
     try:
         field = session.query(db.BingoField).filter_by(link=bingo_str).one()
-    except:
+    except NoResultFound:
         abort(404)
 
     # check authentication via uuid-cookie
@@ -238,7 +238,7 @@ def bingo_undo(bingo_str, x, y):
     square.check_time = None
     session.commit()
 
-    return "ajax ja"
+    return jsonify(data="success", x=x, y=y)
 
 
 @app.route('/highscores/')
