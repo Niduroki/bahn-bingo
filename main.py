@@ -155,7 +155,7 @@ def bingo_field(bingo_str):
     )
 
 
-@app.route('/<link:bingo_str>/quit/')
+@app.route('/<link:bingo_str>/quit/', methods=["post"])
 def bingo_quit(bingo_str):
     session = db.Session()
     try:
@@ -178,7 +178,7 @@ def bingo_quit(bingo_str):
 
     response = make_response(redirect('/'))
     response.set_cookie(key="bingo_uuid", value="", expires=0)  # set cookie to expire
-    return response
+    return response  # TODO doesn't update window.location
 
 
 @app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/', methods=["post"])
