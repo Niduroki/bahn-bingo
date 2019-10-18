@@ -7,6 +7,9 @@
     {% for x in range(5) %}
         <div class="bingo-square{% if squares[x][y].check_time %} checked{% endif %}">
             {{ squares[x][y].content }}
+            {% if squares[x][y].check_time %}
+                <br>Zeit: {{ squares[x][y].check_time.strftime("%d.%m.%y %H:%M Uhr") }}
+            {% endif %}
             {% if squares[x][y].check_time and authenticated %}
                 <br><a href="{{submit_url_base}}{{x+1}}/{{y+1}}/undo/">Rückgängig</a>
             {% elif not squares[x][y].check_time and authenticated %}
