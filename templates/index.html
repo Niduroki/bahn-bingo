@@ -1,3 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
 <form method="post">
   Name: <input type="text" name="player_name"><br>
   <input type="submit" value="Push it!">
@@ -7,3 +9,4 @@ games:<br>
 {% for game in games %}
   <a href="/{{ game.link }}/">{{ game }}</a> – Score of {{ game.score }}<br>
 {% endfor %}
+{% endblock %}

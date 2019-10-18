@@ -1,5 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
 <a href="{{quit_url}}">Aufgeben</a>
-{{submit_url_base}}
 
 <table border="1">
 {% for y in range(5) %}
@@ -8,10 +9,9 @@
         <th height="100px">
             {{ squares[x][y].content }}
             {% if squares[x][y].check_time %}
-            Checked
-            {% endif %}
-            {% if authenticated %}
-                <br><a href="{{submit_url_base}}{{x}}/{{y}}">Check</a>
+                <br>Checked
+            {% elif authenticated %}
+                <br><a href="{{submit_url_base}}{{x+1}}/{{y+1}}">Check</a>
             {% endif %}
             <br>
         </th>
@@ -19,3 +19,4 @@
     </tr>
 {% endfor %}
 </table>
+{% endblock %}
