@@ -6,8 +6,22 @@
 </form>
 <br>
 <h3>Top 5</h3>
+<ol>
 {% for game in games %}
-  <a href="/{{ game.link }}/">{{ game }}</a> – Score of {{ game.score }}<br>
+  <li>
+    <a href="/{{ game.link }}/">
+      {{ game.player_name }} erreichte am {{ game.start_time.strftime("%d.%m.%y %H:%M Uhr") }}
+    </a> {{ game.score }} Punkte
+  </li>
 {% endfor %}
-<a href="/highscores/">Highscores</a>
+</ol>
+<a href="/highscores/" class="ui-btn ui-btn-inline">Highscores</a>
+<hr>
+<h3>Anleitung</h3>
+<ul>
+  <li>Bingo-Felder gedrückt halten zur Interaktion</li>
+  <li>Angekreuzte Felder lassen sich so auch rückgängig machen</li>
+  <li>Aufgeben-Knopf gedrückt halten zum aufgeben</li>
+  <li>Am Ende verliert jeder</li>
+</ul>
 {% endblock %}

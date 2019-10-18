@@ -1,6 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
+<ol>
     {% for game in games %}
-        <a href="/{{ game.link }}/">{{ game }}</a> – Score of {{ game.score }}<br>
+    <li>
+        <a href="/{{ game.link }}/">
+        {{ game.player_name }} erreichte am {{ game.start_time.strftime("%d.%m.%y %H:%M Uhr") }}
+        </a>
+        {% if game.score %}
+            {{ game.score }}
+        {% else %}
+            Keine
+        {% endif %}
+        Punkte
+    </li>
     {% endfor %}
+</ol>
 {% endblock %}
