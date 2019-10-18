@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, make_response, url_
 from uuid import uuid4
 from string import ascii_lowercase
 from random import choice, shuffle
-from datetime import datetime, timedelta
+from datetime import datetime
 import db
 from reasons import reasons
 from itertools import product as carthesian_product
@@ -18,9 +18,9 @@ class LinkConverter(BaseConverter):
 app.url_map.converters['link'] = LinkConverter
 
 
-def generate_string(len=10):
+def generate_string(length=10):
     retval = ""
-    for i in range(0,len):
+    for i in range(0, length):
         retval += choice(ascii_lowercase)
     return retval
 
@@ -73,8 +73,8 @@ def check_bingo(session, field):
     # check diagonal top right -> bottom left
     count = session.query(db.BingoSquares.check_time).filter(
         db.BingoSquares.bingo_field == field,
-        (6-db.BingoSquares.x_position) == db.BingoSquares.y_position
-        , db.BingoSquares.check_time.isnot(None)
+        (6-db.BingoSquares.x_position) == db.BingoSquares.y_position,
+        db.BingoSquares.check_time.isnot(None)
     ).count()
     if count == 5:
         return True
@@ -97,7 +97,9 @@ def index():
                 return response
             return redirect(url_for('.bingo_field', bingo_str=instance.link))
         else:
-            games = session.query(db.BingoField).order_by("score").all()[:5]
+            games = session.query(db.BingoField).filter(
+                db.BingoField.score.isnot(None)
+            ).order_by(db.BingoField.score.desc()).all()[:5]
             return render_template("index.html", games=games)
     elif request.method == "POST":
         try:
@@ -120,6 +122,7 @@ def index():
             key="bingo_uuid", value=obj.uuid, max_age=3600*24*90,  # 90 days
         )
         return response
+
 
 @app.route('/<link:bingo_str>/')
 def bingo_field(bingo_str):
@@ -153,6 +156,7 @@ def bingo_field(bingo_str):
             authenticated=authenticated, squares=field, bingo=obj,
         )
 
+
 @app.route('/<link:bingo_str>/quit/')
 def bingo_quit(bingo_str):
     session = db.Session()
@@ -177,6 +181,7 @@ def bingo_quit(bingo_str):
     response = make_response(redirect('/'))
     response.set_cookie(key="bingo_uuid", value="", expires=0)  # set cookie to expire
     return response
+
 
 @app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/')#, methods=["post"])
 def bingo_submit(bingo_str, x, y):
@@ -209,6 +214,7 @@ def bingo_submit(bingo_str, x, y):
 
     return "ajax ja"
 
+
 @app.route('/<link:bingo_str>/submit/<int:x>/<int:y>/undo/')#, methods=["post"])
 def bingo_undo(bingo_str, x, y):
     if not 1 <= x <= 5 or not 1 <= y <= 5:
@@ -234,8 +240,9 @@ def bingo_undo(bingo_str, x, y):
 
     return "ajax ja"
 
+
 @app.route('/highscores/')
 def highscores():
     session = db.Session()
-    games = session.query(db.BingoField).order_by("score").all()
+    games = session.query(db.BingoField).order_by(db.BingoField.score.desc()).all()
     return render_template("highscores.html", games=games)
