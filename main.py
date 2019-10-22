@@ -8,8 +8,11 @@ from reasons import reasons
 from itertools import product as carthesian_product
 from werkzeug.routing import BaseConverter
 from sqlalchemy.orm.exc import NoResultFound
+from pytz import timezone
 
 app = Flask(__name__)
+
+berlin = timezone("Europe/Berlin")
 
 
 class LinkConverter(BaseConverter):
@@ -110,7 +113,7 @@ def index():
         session = db.Session()
         obj = db.BingoField(
             link=generate_string(), uuid=str(uuid4()), player_name=player_name,
-            finished=False, start_time=datetime.now()
+            finished=False, start_time=datetime.now(tz=berlin)
         )
         session.add(obj)
         session.commit()
@@ -200,12 +203,12 @@ def bingo_submit(bingo_str, x, y):
         bingo_field=field, x_position=x, y_position=y
     ).one()
 
-    square.check_time = datetime.now()
+    square.check_time = datetime.now(tz=berlin)
     session.commit()
 
     if check_bingo(session, field):
         field.finished = True
-        score = field.start_time - datetime.now()
+        score = field.start_time - datetime.now(tz=berlin)
         field.score = int(1000000 / max(score.seconds//60, 1))
         session.commit()
 
