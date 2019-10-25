@@ -248,3 +248,10 @@ def highscores():
     session = db.Session()
     games = session.query(db.BingoField).order_by(db.BingoField.score.desc()).all()
     return render_template("highscores.html", games=games)
+
+
+@app.route('/active/')
+def active():
+    session = db.Session()
+    games = session.query(db.BingoField).filter(db.BingoField.finished.isnot(True))
+    return render_template("active.html", games=games)

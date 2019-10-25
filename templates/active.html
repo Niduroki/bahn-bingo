@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<ul>
+    {% for game in games %}
+    <li>
+        <a href="/{{ game.link }}/" class="ui-btn ui-btn-inline">
+        {{ game.player_name }} startete am {{ game.start_time.strftime("%d.%m.%y %H:%M Uhr") }}
+        </a>
+    </li>
+    {% else %}
+        Keine aktiven Spiele.
+    {% endfor %}
+</ul>
+{% endblock %}
