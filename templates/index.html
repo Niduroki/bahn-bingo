@@ -13,6 +13,8 @@
       {{ game.player_name }} erreichte am {{ game.start_time.strftime("%d.%m.%y %H:%M Uhr") }}
     </a> {{ game.score }} Punkte
   </li>
+{% else %}
+  Noch keine Highscores.
 {% endfor %}
 </ol>
 <a href="/highscores/" class="ui-btn ui-btn-inline">Highscores</a>
