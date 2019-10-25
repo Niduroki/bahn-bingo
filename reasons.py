@@ -25,4 +25,5 @@ reasons = [
     "Umgekehrte Wagenreihung",
     "Raucher im Nichtraucherbereich",
     "Anschluss verpasst",
+    "Schulklasse",
 ]
