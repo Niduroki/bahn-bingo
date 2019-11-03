@@ -141,8 +141,11 @@ def bingo_field(bingo_str):
     else:
         authenticated = False
 
-    if authenticated:
-        pass
+    if authenticated and obj.finished:
+        # Sanity check: Bingo field is done, reset cookie
+        response = make_response(redirect('/'))
+        response.set_cookie(key="bingo_uuid", value="", expires=0)  # set cookie to expire
+        return response
 
     squares = session.query(db.BingoSquares).filter_by(bingo_field=obj).all()
     field = [['' for x in range(5)] for y in range(5)]  # initialize field
@@ -208,11 +211,12 @@ def bingo_submit(bingo_str, x, y):
 
     if check_bingo(session, field):
         field.finished = True
-        score = field.start_time - datetime.now(tz=berlin)
-        field.score = int(1000000 / max(score.seconds//60, 1))
+        delta = datetime.now(tz=berlin) - field.start_time.astimezone(berlin)
+        print(delta.seconds)
+        field.score = int(1000000 / max(delta.seconds//60, 1))
         session.commit()
 
-        return jsonify(data="finished", score=int(1000000 / max(score.seconds//60, 1)))
+        return jsonify(data="finished", score=int(1000000 / max(delta.seconds//60, 1)))
 
     return jsonify(data="success", x=x, y=y)
 
