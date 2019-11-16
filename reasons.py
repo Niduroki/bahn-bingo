@@ -26,4 +26,6 @@ reasons = [
     "Raucher im Nichtraucherbereich",
     "Anschluss verpasst",
     "Schulklasse",
+    "Türstörung",
+    "Gleiswechsel",
 ]
