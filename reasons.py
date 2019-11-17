@@ -15,7 +15,6 @@ reasons = [
     "Zugstau",
     "Bettler im Zug",
     'Durchsage: "Trickbetrüger im Zug/Bahnhof"',
-    "Trompeter am Morgen",
     "Fußballspiel",
     '"Verzögert sich […] auf unbestimmte Zeit"',
     "Personen im Gleis",
@@ -28,4 +27,5 @@ reasons = [
     "Schulklasse",
     "Türstörung",
     "Gleiswechsel",
+    "Technische Störung",
 ]
