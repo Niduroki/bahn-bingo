@@ -3,13 +3,26 @@ $(function(){
     $("#giveup").bind("taphold", giveupHandler);
 
     function tapholdHandler(event){
-        if (event.target.classList.contains("checked")) {
+        event.preventDefault();
+        var parent = false;
+        if (
+            event.target.classList.contains("checked") ||
+            event.target.parentNode.classList.contains("checked")
+        ) {
             // UNDO
             var undo_url = event.target.dataset.undoUrl;
+            if (undo_url === undefined) {
+                undo_url = event.target.parentNode.dataset.undoUrl;
+                parent = true;
+            }
             $.ajax({
                 success: function(data){
                         if (confirm("Dieses Feld rückgängig machen?")) {
-                            $(event.target).removeClass("checked");
+                            if (parent) {
+                                $(event.target.parentNode).removeClass("checked");
+                            } else {
+                                $(event.target).removeClass("checked");
+                            }
                         }
                 },
                 type: "POST",
@@ -18,14 +31,22 @@ $(function(){
         } else {
             // SUBMIT
             var submit_url = event.target.dataset.submitUrl;
+            if (submit_url === undefined) {
+                submit_url = event.target.parentNode.dataset.submitUrl;
+                parent = true;
+            }
             $.ajax({
                 success: function(data){
-                    if (data.data === "success") {
-                        $(event.target).addClass("checked");
-                    } else if (data.data === "finished") {
-                        $(event.target).addClass("checked");
-                        alert("Was für ein D-Bakel. Punktestand: " + data.score);
+                    if (data.data === "success" || data.data === "finished") {
+                        if (parent) {
+                            $(event.target.parentNode).addClass("checked");
+                        } else {
+                            $(event.target).addClass("checked");
+                        }
+                    }
+                    if (data.data === "finished") {
                         document.cookie = "";
+                        alert("Was für ein D-Bakel. Punktestand: " + data.score);
                         window.location = "/";
                     }
                 },
@@ -36,8 +57,12 @@ $(function(){
     }
 
     function giveupHandler(event){
+        event.preventDefault();
         if (confirm("Aufgeben, und Bingo-Feld beenden?")) {
             var quit_url = event.target.dataset.quitUrl;
+            if (quit_url === undefined) {
+                quit_url = event.target.parentNode.dataset.quitUrl;
+            }
             $.ajax({
                 success: function(data){
                     document.cookie = "";
