@@ -160,6 +160,28 @@ def bingo_field(bingo_str):
     )
 
 
+@app.route('/<link:bingo_str>/hijack/<string:bingo_uuid>/')
+def bingo_hijack(bingo_str, bingo_uuid):
+    session = db.Session()
+    try:
+        obj = session.query(db.BingoField).filter_by(link=bingo_str).one()
+    except NoResultFound:
+        abort(404)
+
+    user_uuid = request.cookies.get("bingo_uuid")
+    if user_uuid is not None:
+        abort(400)
+    else:
+        if bingo_uuid == obj.uuid:
+            response = make_response(redirect(url_for('.bingo_field', bingo_str=obj.link)))
+            response.set_cookie(
+                key="bingo_uuid", value=obj.uuid, max_age=3600 * 24 * 90,  # 90 days
+            )
+            return response
+        else:
+            abort(403)
+
+
 @app.route('/<link:bingo_str>/quit/', methods=["post"])
 def bingo_quit(bingo_str):
     session = db.Session()
