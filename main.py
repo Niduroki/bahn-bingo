@@ -142,7 +142,7 @@ def bingo_field(bingo_str):
         authenticated = False
 
     if authenticated and obj.finished:
-        # Sanity check: Bingo field is done, reset cookie
+        # Sanity check: Bingo field is done/has been reaped – reset cookie
         response = make_response(redirect('/'))
         response.set_cookie(key="bingo_uuid", value="", expires=0)  # set cookie to expire
         return response
@@ -281,3 +281,28 @@ def active():
     session = db.Session()
     games = session.query(db.BingoField).filter(db.BingoField.finished.isnot(True))
     return render_template("active.html", games=games)
+
+
+@app.route('/cron/')
+def cron():
+    session = db.Session()
+    finished = []
+    games = session.query(db.BingoField).filter(db.BingoField.finished.isnot(True))
+    for game in games:
+        timediff = datetime.now(tz=berlin) - game.start_time.astimezone(berlin)
+        if timediff.days > 93:  # Check if a game is older than 90 days, i.e. its cookie expired
+            # Cookie has expired, quit the game
+            game.finished = True
+            session.commit()
+            finished.append(game.link)
+        elif timediff.days > 7:  # Check if a game has no entries after 7 days, i.e. not really started
+            checked_fields = session.query(db.BingoSquares.check_time).filter(
+                db.BingoSquares.bingo_field == game,
+                db.BingoSquares.check_time.isnot(None)
+            ).count()
+            if checked_fields == 0:
+                game.finished = True
+                session.commit()
+                finished.append(game.link)
+
+    return jsonify(data="success", finished=finished)
