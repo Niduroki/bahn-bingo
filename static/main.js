@@ -15,19 +15,19 @@ $(function(){
                 undo_url = event.target.parentNode.dataset.undoUrl;
                 parent = true;
             }
-            $.ajax({
-                success: function(data){
-                        if (confirm("Dieses Feld rückgängig machen?")) {
+            if (confirm("Dieses Feld rückgängig machen?")) {
+                $.ajax({
+                    success: function(data){
                             if (parent) {
                                 $(event.target.parentNode).removeClass("checked");
                             } else {
                                 $(event.target).removeClass("checked");
                             }
-                        }
-                },
-                type: "POST",
-                url: undo_url,
-            });
+                    },
+                    type: "POST",
+                    url: undo_url,
+                });
+            }
         } else {
             // SUBMIT
             var submit_url = event.target.dataset.submitUrl;
