@@ -8,7 +8,6 @@ reasons = [
     "Oberleitungsstörung",
     '"Netter" Bahnbegleiter',
     "Wagen mit reservierten Plätzen wurde abgekoppelt",
-    "Recklinghausen Süd",
     "Streik",
     "Schienenersatz-Verkehr",
     "Überholung durch einen anderen Zug",
