@@ -49,6 +49,11 @@ $(function(){
                         alert("Was für ein D-Bakel. Punktestand: " + data.score);
                         window.location = "/";
                     }
+                    if (data.data === "cheater") {
+                        document.cookie = "";
+                        alert("Cheater.");
+                        window.location = "/";
+                    }
                 },
                 type: "POST",
                 url: submit_url,
