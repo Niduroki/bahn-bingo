@@ -1,0 +1,9 @@
+kind: pipeline
+name: default
+
+type: docker
+steps:
+- name: unittests
+  image: niduroki/bahn-bingo
+  commands:
+  - pytest -v

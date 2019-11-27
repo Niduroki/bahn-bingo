@@ -88,7 +88,7 @@ def check_bingo(session, field):
 @app.route('/', methods=["get", "post"])
 def index():
     if request.method == "GET":
-        session = db.Session()
+        session = db.get_session()
         if request.cookies.get("bingo_uuid") is not None:
             try:
                 instance = session.query(db.BingoField).filter_by(
@@ -110,7 +110,7 @@ def index():
         except KeyError:
             return redirect('/')
 
-        session = db.Session()
+        session = db.get_session()
         obj = db.BingoField(
             link=generate_string(), uuid=str(uuid4()), player_name=player_name,
             finished=False, start_time=datetime.now(tz=berlin)
@@ -129,7 +129,7 @@ def index():
 
 @app.route('/<link:bingo_str>/')
 def bingo_field(bingo_str):
-    session = db.Session()
+    session = db.get_session()
     try:
         obj = session.query(db.BingoField).filter_by(link=bingo_str).one()
     except NoResultFound:
@@ -162,7 +162,7 @@ def bingo_field(bingo_str):
 
 @app.route('/<link:bingo_str>/hijack/<string:bingo_uuid>/')
 def bingo_hijack(bingo_str, bingo_uuid):
-    session = db.Session()
+    session = db.get_session()
     try:
         obj = session.query(db.BingoField).filter_by(link=bingo_str).one()
     except NoResultFound:
@@ -184,7 +184,7 @@ def bingo_hijack(bingo_str, bingo_uuid):
 
 @app.route('/<link:bingo_str>/quit/', methods=["post"])
 def bingo_quit(bingo_str):
-    session = db.Session()
+    session = db.get_session()
     try:
         obj = session.query(db.BingoField).filter_by(link=bingo_str).one()
     except NoResultFound:
@@ -213,7 +213,7 @@ def bingo_submit(bingo_str, x, y):
     if not 1 <= x <= 5 or not 1 <= y <= 5:
         return jsonify(data="error")
 
-    session = db.Session()
+    session = db.get_session()
     try:
         field = session.query(db.BingoField).filter_by(link=bingo_str).one()
     except NoResultFound:
@@ -254,7 +254,7 @@ def bingo_undo(bingo_str, x, y):
     if not 1 <= x <= 5 or not 1 <= y <= 5:
         return jsonify(data="error")
 
-    session = db.Session()
+    session = db.get_session()
     try:
         field = session.query(db.BingoField).filter_by(link=bingo_str).one()
     except NoResultFound:
@@ -277,21 +277,21 @@ def bingo_undo(bingo_str, x, y):
 
 @app.route('/highscores/')
 def highscores():
-    session = db.Session()
+    session = db.get_session()
     games = session.query(db.BingoField).order_by(db.BingoField.score.desc()).all()
     return render_template("highscores.html", games=games)
 
 
 @app.route('/active/')
 def active():
-    session = db.Session()
+    session = db.get_session()
     games = session.query(db.BingoField).filter(db.BingoField.finished.isnot(True))
     return render_template("active.html", games=games)
 
 
 @app.route('/cron/')
 def cron():
-    session = db.Session()
+    session = db.get_session()
     finished = []
     games = session.query(db.BingoField).filter(db.BingoField.finished.isnot(True))
     for game in games:

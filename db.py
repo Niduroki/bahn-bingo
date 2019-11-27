@@ -1,8 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-
-engine = create_engine('sqlite:///db/bingo.db')
+from flask import current_app
 
 Base = declarative_base()
 
@@ -42,5 +41,11 @@ class BingoSquares(Base):
 BingoField.squares = relationship("BingoSquares", back_populates="bingo_field")
 
 
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
+def get_session():
+    try:
+        db_uri = current_app.config["DATABASE"]
+    except KeyError:
+        db_uri = 'sqlite:///db/bingo.db'
+    engine = create_engine(db_uri)
+    Base.metadata.create_all(engine)
+    return sessionmaker(bind=engine)()
