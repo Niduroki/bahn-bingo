@@ -33,7 +33,6 @@ def test_timezone_submit(client):
 
 def test_cheater_prevention(client):
     """ Check whether fields finished within 2 hours are detected as cheaters """
-
     # Create a field
     rv = client.post('/', data=dict(player_name="cheater"))
     game_link = rv.location[-11:-1]
@@ -55,7 +54,6 @@ def test_cheater_prevention(client):
     with freeze_time(datetime.now()) as frozen_time:
         rv = client.post('/', data=dict(player_name="cheater155"))
         game_link = rv.location[-11:-1]
-        session = db.get_session()
         game_pk = session.query(db.BingoField.id).filter(db.BingoField.link == game_link).one()[0]
         rv = client.get(f'/{game_link}/')
         assert b'Spieler: cheater155' in rv.data
@@ -75,7 +73,6 @@ def test_cheater_prevention(client):
         with freeze_time(datetime.now()) as frozen_time:
             rv = client.post('/', data=dict(player_name="legit"))
             game_link = rv.location[-11:-1]
-            session = db.get_session()
             game_pk = session.query(db.BingoField.id).filter(db.BingoField.link == game_link).one()[0]
             rv = client.get(f'/{game_link}/')
             assert b'Spieler: legit' in rv.data
@@ -96,7 +93,25 @@ def test_cheater_prevention(client):
 
 
 def test_bingo_scoring(client):
-    #TODO
-    # feld erstellen und 5 kreuze setzen nach 3 Stunden (Score mit Erwartung vergleichen
-    # dito mit 5 Stunden, 24 Stunden, 48 Stunden, 96 Stunden, 300 Stunden, 700 Stunden (danach ist der Cookie abgelaufen)
-    pass
+    """ Test whether score matches our expectations"""
+    # Check scores after 3, 5, 24, 48, 96, 300 and 700 hours (after that the cookie expired)
+    for hours in [3, 5, 28, 48, 96, 300, 700]:  # problem mit 24h??
+        with freeze_time(datetime.now()) as frozen_time:
+            rv = client.post('/', data=dict(player_name=f"{hours}hour"))
+            game_link = rv.location[-11:-1]
+            session = db.get_session()
+            game_pk = session.query(db.BingoField.id).filter(db.BingoField.link == game_link).one()[0]
+            rv = client.get(f'/{game_link}/')
+            assert f'Spieler: {hours}hour'.encode() in rv.data
+            # Wait some hours
+            frozen_time.tick(delta=timedelta(hours=hours))
+            # Create a bingo
+            for x, y in product((1, 1, 1, 1), (1, 2, 3, 4)):
+                rv = client.post(f'/{game_link}/submit/{x}/{y}/')
+                assert {'data': 'success', 'x': x, 'y': y} == rv.get_json()
+            rv = client.post(f'/{game_link}/submit/1/5/')
+            assert {'data': 'finished', 'score': int(1000000 / (60*hours))} == rv.get_json()
+            # Check if field is finished and score matches our expectation
+            game = session.query(db.BingoField).filter(db.BingoField.id == game_pk).one()
+            assert game.score == int(1000000 / (60*hours))
+            assert game.finished

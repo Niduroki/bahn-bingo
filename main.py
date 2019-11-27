@@ -233,7 +233,7 @@ def bingo_submit(bingo_str, x, y):
 
     if check_bingo(session, field):
         delta = datetime.now(tz=berlin) - field.start_time.astimezone(berlin)
-        if delta.seconds <= 7200:
+        if delta.total_seconds() <= 7200:
             # Cheater protection - No game can be finished within the first 2 hours
             session.query(db.BingoSquares).filter_by(bingo_field=field).delete()
             session.delete(field)
@@ -241,10 +241,10 @@ def bingo_submit(bingo_str, x, y):
             return jsonify(data="cheater")
         else:
             field.finished = True
-            field.score = int(1000000 / max(delta.seconds//60, 1))
+            field.score = int(1000000 / max(delta.total_seconds()//60, 1))
             session.commit()
 
-            return jsonify(data="finished", score=int(1000000 / max(delta.seconds // 60, 1)))
+            return jsonify(data="finished", score=int(1000000 / max(delta.total_seconds() // 60, 1)))
 
     return jsonify(data="success", x=x, y=y)
 
