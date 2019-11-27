@@ -4,6 +4,7 @@ from itertools import product
 import pytest
 from freezegun import freeze_time
 from datetime import datetime, timedelta
+from random import randint
 
 from main import app, db
 
@@ -22,7 +23,56 @@ def client():
     os.unlink(db_file)
 
 
-# TODO Zeitzonen Krams sowohl mit Sommer als auch Winterzeit testen (also wahrscheinlich freezegun aus Projekt Play)
+def test_basic_functionality(client):
+    """Sanity test to see if everything works as intended"""
+    # Create a field
+    with freeze_time(datetime.now()) as frozen_time:
+        rv = client.post('/', data=dict(player_name="player"))
+        game_link = rv.location[-11:-1]
+        session = db.get_session()
+        game_pk = session.query(db.BingoField.id).filter(db.BingoField.link == game_link).one()[0]
+        rv = client.get(f'/{game_link}/')
+        assert b'Spieler: player' in rv.data
+        # Wait 15 minutes
+        frozen_time.tick(delta=timedelta(minutes=15))
+        # Check middle
+        rv = client.post(f'/{game_link}/submit/3/3/')
+        assert {'data': 'success', 'x': 3, 'y': 3} == rv.get_json()
+        # TODO check if this is in the DB
+        # Wait 15 minutes
+        frozen_time.tick(delta=timedelta(minutes=15))
+        # Uncheck middle
+        rv = client.post(f'/{game_link}/submit/3/3/undo/')
+        assert {'data': 'success', 'x': 3, 'y': 3} == rv.get_json()
+        # TODO check if this is in the DB
+        # Now randomly check a field every hour until we have a bingo
+        bingo = False
+        checked = []
+        minutes_passed = 30
+        while not bingo:
+            frozen_time.tick(delta=timedelta(hours=1))
+            minutes_passed += 60
+            # Search for an unchecked field
+            unchecked_field = False
+            while not unchecked_field:
+                x = randint(1, 5)
+                y = randint(1, 5)
+                if [x, y] not in checked:
+                    unchecked_field = True
+            checked.append([x, y])
+            # Check the field
+            rv = client.post(f'/{game_link}/submit/{x}/{y}/')
+            json_data = rv.get_json()
+            # TODO Check if the checked field is in the DB
+            if json_data['data'] == "success":
+                assert {'data': 'success', 'x': x, 'y': y} == json_data
+            elif json_data['data'] == "finished":
+                assert {'data': 'finished', 'score': int(1000000 / minutes_passed)} == json_data
+                bingo = True
+                # TODO Check if the field is finished and the score is filled in
+
+
+# TODO Zeitzonen Krams sowohl mit Sommer als auch Winterzeit testen (also mit freezegun)
 def test_timezone_submit(client):
     #TODO
     # feld erstellen, prüfen ob tz richtig angezeigt wird
