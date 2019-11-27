@@ -2,4 +2,3 @@ venv
 bingo.db
 __pycache__
 .idea
-tmp
