@@ -38,13 +38,21 @@ def test_basic_functionality(client):
         # Check middle
         rv = client.post(f'/{game_link}/submit/3/3/')
         assert {'data': 'success', 'x': 3, 'y': 3} == rv.get_json()
-        # TODO check if this is in the DB
+        # Check if it's submitted to the db
+        square_time = session.query(db.BingoSquares.check_time).filter(
+            db.BingoSquares.bingo_field_id == game_pk, db.BingoSquares.x_position == 3, db.BingoSquares.y_position == 3
+        ).one()[0]
+        assert square_time is not None
         # Wait 15 minutes
         frozen_time.tick(delta=timedelta(minutes=15))
         # Uncheck middle
         rv = client.post(f'/{game_link}/submit/3/3/undo/')
         assert {'data': 'success', 'x': 3, 'y': 3} == rv.get_json()
-        # TODO check if this is in the DB
+        # Check if it's submitted to the db
+        square_time = session.query(db.BingoSquares.check_time).filter(
+            db.BingoSquares.bingo_field_id == game_pk, db.BingoSquares.x_position == 3, db.BingoSquares.y_position == 3
+        ).one()[0]
+        assert square_time is None
         # Now randomly check a field every hour until we have a bingo
         bingo = False
         checked = []
@@ -63,22 +71,38 @@ def test_basic_functionality(client):
             # Check the field
             rv = client.post(f'/{game_link}/submit/{x}/{y}/')
             json_data = rv.get_json()
-            # TODO Check if the checked field is in the DB
+            # Check if it's submitted to the db
+            square_time = session.query(db.BingoSquares.check_time).filter(
+                db.BingoSquares.bingo_field_id == game_pk, db.BingoSquares.x_position == x,
+                db.BingoSquares.y_position == y
+            ).one()[0]
+            assert square_time is not None
+
             if json_data['data'] == "success":
                 assert {'data': 'success', 'x': x, 'y': y} == json_data
             elif json_data['data'] == "finished":
                 assert {'data': 'finished', 'score': int(1000000 / minutes_passed)} == json_data
+                # Check if the field is finished and the score is saved in the db
+                game = session.query(db.BingoField).filter(db.BingoField.id == game_pk).one()
+                assert game.finished
+                assert game.score == int(1000000 / minutes_passed)
+                # Finish the while-loop
                 bingo = True
-                # TODO Check if the field is finished and the score is filled in
 
 
-# TODO Zeitzonen Krams sowohl mit Sommer als auch Winterzeit testen (also mit freezegun)
 def test_timezone_submit(client):
-    #TODO
-    # feld erstellen, prüfen ob tz richtig angezeigt wird
-    # auch prüfen ob es richtig gespeichert wird - in der Datenbank ist CEST, also: Zeit speichern, Zeit lesen. gelesene Zeit muss gleich gespeicherte Zeit sein
-    # feld kreuzen, neu laden, prüfen ob tz bei den feldern richtig ist
-    pass
+    # Test both DST time and non DST time
+    for tz_time in [datetime(2019, 6, 15, 12), datetime(2019, 12, 15, 12)]:
+        with freeze_time(tz_time) as frozen_time:
+            # Create a field
+            rv = client.post('/', data=dict(player_name="player"))
+            game_link = rv.location[-11:-1]
+            session = db.get_session()
+            game_pk = session.query(db.BingoField.id).filter(db.BingoField.link == game_link).one()[0]
+            #TODO
+            # prüfen ob tz richtig angezeigt wird
+            # auch prüfen ob es richtig gespeichert wird - in der Datenbank ist CEST, also: Zeit speichern, Zeit lesen. gelesene Zeit muss gleich gespeicherte Zeit sein
+            # feld kreuzen, neu laden, prüfen ob tz bei den feldern richtig ist
 
 
 def test_cheater_prevention(client):
