@@ -119,33 +119,33 @@ def test_cheater_prevention(client):
         assert 0 == session.query(db.BingoField).filter(db.BingoField.id == game_pk).count()
         assert 0 == session.query(db.BingoSquares).filter(db.BingoSquares.bingo_field_id == game_pk).count()
 
-        # Tick four fields after 1:55 hours and fifth after 2:05 hours – Should pass
-        with freeze_time(datetime.now()) as frozen_time:
-            rv = client.post('/', data=dict(player_name="legit"))
-            game_link = rv.location[-11:-1]
-            game_pk = session.query(db.BingoField.id).filter(db.BingoField.link == game_link).one()[0]
-            rv = client.get(f'/{game_link}/')
-            assert b'Spieler: legit' in rv.data
-            # Wait 1:55 hours
-            frozen_time.tick(delta=timedelta(hours=1, minutes=55))
-            # Tick four fields now
-            for x, y in product((1, 1, 1, 1), (1, 2, 3, 4)):
-                rv = client.post(f'/{game_link}/submit/{x}/{y}/')
-                assert {'data': 'success', 'x': x, 'y': y} == rv.get_json()
-            # Wait 10 minutes
-            frozen_time.tick(delta=timedelta(minutes=10))
-            rv = client.post(f'/{game_link}/submit/1/5/')
-            assert {'data': 'finished', 'score': (1000000/125)} == rv.get_json()
-            # Check if field is finished
-            game = session.query(db.BingoField).filter(db.BingoField.id == game_pk).one()
-            assert game.score == 1000000 / 125
-            assert game.finished
+    # Tick four fields after 1:55 hours and fifth after 2:05 hours – Should pass
+    with freeze_time(datetime.now()) as frozen_time:
+        rv = client.post('/', data=dict(player_name="legit"))
+        game_link = rv.location[-11:-1]
+        game_pk = session.query(db.BingoField.id).filter(db.BingoField.link == game_link).one()[0]
+        rv = client.get(f'/{game_link}/')
+        assert b'Spieler: legit' in rv.data
+        # Wait 1:55 hours
+        frozen_time.tick(delta=timedelta(hours=1, minutes=55))
+        # Tick four fields now
+        for x, y in product((1, 1, 1, 1), (1, 2, 3, 4)):
+            rv = client.post(f'/{game_link}/submit/{x}/{y}/')
+            assert {'data': 'success', 'x': x, 'y': y} == rv.get_json()
+        # Wait 10 minutes
+        frozen_time.tick(delta=timedelta(minutes=10))
+        rv = client.post(f'/{game_link}/submit/1/5/')
+        assert {'data': 'finished', 'score': (1000000/125)} == rv.get_json()
+        # Check if field is finished
+        game = session.query(db.BingoField).filter(db.BingoField.id == game_pk).one()
+        assert game.score == 1000000 / 125
+        assert game.finished
 
 
 def test_bingo_scoring(client):
     """ Test whether score matches our expectations"""
     # Check scores after 3, 5, 24, 48, 96, 300 and 700 hours (after that the cookie expired)
-    for hours in [3, 5, 28, 48, 96, 300, 700]:  # problem mit 24h??
+    for hours in [3, 5, 24, 48, 96, 300, 700]:
         with freeze_time(datetime.now()) as frozen_time:
             rv = client.post('/', data=dict(player_name=f"{hours}hour"))
             game_link = rv.location[-11:-1]
