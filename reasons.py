@@ -27,4 +27,5 @@ reasons = [
     "Türstörung",
     "Gleiswechsel",
     "Technische Störung",
+    "Verzögerungen im Betriebsablauf",
 ]
