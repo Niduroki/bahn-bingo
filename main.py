@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, make_response, url_
 from uuid import uuid4
 from string import ascii_lowercase
 from random import choice, shuffle
-from datetime import datetime
+from datetime import datetime, timedelta
 import db
 from reasons import reasons
 from itertools import product as carthesian_product
@@ -20,6 +20,15 @@ class LinkConverter(BaseConverter):
 
 
 app.url_map.converters['link'] = LinkConverter
+
+
+def get_now_plus_offset():
+    """Gets datetime.now() plus DST aware timezone offset – weirdness regarding timezones"""
+    check = datetime.now(tz=berlin)
+    if check.utcoffset().total_seconds() == timedelta(hours=1).total_seconds():
+        return datetime.now() + timedelta(hours=1)
+    else:  # DST
+        return datetime.now() + timedelta(hours=2)
 
 
 def generate_string(length=10):
@@ -232,7 +241,7 @@ def bingo_submit(bingo_str, x, y):
     session.commit()
 
     if check_bingo(session, field):
-        delta = datetime.now(tz=berlin) - field.start_time.astimezone(berlin)
+        delta = get_now_plus_offset() - field.start_time
         if delta.total_seconds() <= 7200:
             # Cheater protection - No game can be finished within the first 2 hours
             session.query(db.BingoSquares).filter_by(bingo_field=field).delete()
@@ -295,7 +304,7 @@ def cron():
     finished = []
     games = session.query(db.BingoField).filter(db.BingoField.finished.isnot(True))
     for game in games:
-        timediff = datetime.now(tz=berlin) - game.start_time.astimezone(berlin)
+        timediff = get_now_plus_offset() - game.start_time.astimezone()
         if timediff.days > 93:  # Check if a game is older than 90 days, i.e. its cookie expired
             # Cookie has expired, quit the game
             game.finished = True
