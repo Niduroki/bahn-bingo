@@ -92,17 +92,46 @@ def test_basic_functionality(client):
 
 def test_timezone_submit(client):
     # Test both DST time and non DST time
-    for tz_time in [datetime(2019, 6, 15, 12), datetime(2019, 12, 15, 12)]:
+    for dst, tz_time in [[True, datetime(2019, 6, 15, 12)], [False, datetime(2019, 12, 15, 12)]]:  # This is UTC time
         with freeze_time(tz_time) as frozen_time:
             # Create a field
             rv = client.post('/', data=dict(player_name="player"))
             game_link = rv.location[-11:-1]
             session = db.get_session()
             game_pk = session.query(db.BingoField.id).filter(db.BingoField.link == game_link).one()[0]
-            #TODO
-            # prüfen ob tz richtig angezeigt wird
-            # auch prüfen ob es richtig gespeichert wird - in der Datenbank ist CEST, also: Zeit speichern, Zeit lesen. gelesene Zeit muss gleich gespeicherte Zeit sein
-            # feld kreuzen, neu laden, prüfen ob tz bei den feldern richtig ist
+            rv = client.get(f'/{game_link}/')
+            assert b'Spieler: player' in rv.data
+            # Check if the right tz is displayed CEST in DST CET otherwise
+            if dst:
+                assert b'Start-Zeit: 15.06.19 14:00 Uhr' in rv.data
+            else:
+                assert b'Start-Zeit: 15.12.19 13:00 Uhr' in rv.data
+            # Check if the right tz was saved CEST in DST CET otherwise
+            db_time = session.query(db.BingoField.start_time).filter(db.BingoField.id == game_pk).one()[0]
+            if dst:
+                assert db_time == tz_time + timedelta(hours=2)
+            else:
+                assert db_time == tz_time + timedelta(hours=1)
+            # Wait an hour
+            frozen_time.tick(delta=timedelta(hours=1))
+            # Check a square
+            rv = client.post(f'/{game_link}/submit/3/3/')
+            assert {'data': 'success', 'x': 3, 'y': 3} == rv.get_json()
+            rv = client.get(f'/{game_link}/')
+            # Check if the right tz is displayed with the checked square
+            if dst:
+                assert b'<p>Zeit: 15.06.19 15:00 Uhr</p>' in rv.data  # Bingo Squares's html looks like this
+            else:
+                assert b'<p>Zeit: 15.12.19 14:00 Uhr</p>' in rv.data
+            # Check if the right tz is displayed in the db
+            db_time = session.query(db.BingoSquares.check_time).filter(
+                db.BingoSquares.bingo_field_id == game_pk, db.BingoSquares.x_position == 3,
+                db.BingoSquares.y_position == 3
+            ).one()[0]
+            if dst:
+                assert db_time == tz_time + timedelta(hours=3)
+            else:
+                assert db_time == tz_time + timedelta(hours=2)
 
 
 def test_cheater_prevention(client):
