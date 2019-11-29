@@ -218,3 +218,36 @@ def test_bingo_scoring(client):
             game = session.query(db.BingoField).filter(db.BingoField.id == game_pk).one()
             assert game.score == int(1000000 / (60*hours))
             assert game.finished
+
+
+def test_cron(client):
+    """Test if /cron/ cleans up properly"""
+    with freeze_time(datetime.now()) as frozen_time:
+        rv = client.post('/', data=dict(player_name="dead"))
+        dead_link = rv.location[-11:-1]
+        session = db.get_session()
+        dead_pk = session.query(db.BingoField.id).filter(db.BingoField.link == dead_link).one()[0]
+        rv = client.get(f'/{dead_link}/')
+        assert b'Spieler: dead' in rv.data
+        rv = client.post('/', data=dict(player_name="cookie"))
+        cookie_link = rv.location[-11:-1]
+        session = db.get_session()
+        rv = client.get(f'/{cookie_link}/')
+        assert b'Spieler: cookie' in rv.data
+        rv = client.post(f'/{cookie_link}/submit/3/3/')
+        assert {'data': 'success', 'x': 3, 'y': 3} == rv.get_json()
+        # Wait seven days
+        frozen_time.tick(delta=timedelta(days=8))
+        rv = client.get('/cron/')
+        assert {'data': 'success', 'finished': [dead_link]} == rv.get_json()
+        # Check if the dead game has been deleted
+        assert 0 == session.query(db.BingoField).filter(db.BingoField.id == dead_pk).count()
+        assert 0 == session.query(db.BingoSquares).filter(db.BingoSquares.bingo_field_id == dead_pk).count()
+        # Check if the slow game is still there
+        assert 1 == session.query(db.BingoField).filter(db.BingoField.link == cookie_link).count()
+        # Wait some more days
+        frozen_time.tick(delta=timedelta(days=90))
+        rv = client.get('/cron/')
+        assert {'data': 'success', 'finished': [cookie_link]} == rv.get_json()
+        assert session.query(db.BingoField.finished).filter(db.BingoField.link == cookie_link).one()[0]
+        assert session.query(db.BingoField.score).filter(db.BingoField.link == cookie_link).one()[0] is None

@@ -304,7 +304,8 @@ def cron():
     finished = []
     games = session.query(db.BingoField).filter(db.BingoField.finished.isnot(True))
     for game in games:
-        timediff = get_now_plus_offset() - game.start_time.astimezone()
+        timediff = get_now_plus_offset() - game.start_time
+        print(timediff.days)
         if timediff.days > 93:  # Check if a game is older than 90 days, i.e. its cookie expired
             # Cookie has expired, quit the game
             game.finished = True
@@ -316,8 +317,10 @@ def cron():
                 db.BingoSquares.check_time.isnot(None)
             ).count()
             if checked_fields == 0:
-                game.finished = True
-                session.commit()
+                # delete the un-started game
                 finished.append(game.link)
+                session.query(db.BingoSquares).filter_by(bingo_field=game).delete()
+                session.delete(game)
+                session.commit()
 
     return jsonify(data="success", finished=finished)
