@@ -246,7 +246,18 @@ def test_cron(client):
         # Check if the slow game is still there
         assert 1 == session.query(db.BingoField).filter(db.BingoField.link == cookie_link).count()
         # Wait some more days
-        frozen_time.tick(delta=timedelta(days=90))
+        frozen_time.tick(delta=timedelta(days=60))
+        # Check another field for the cookie game
+        rv = client.post(f'/{cookie_link}/submit/2/3/')
+        assert {'data': 'success', 'x': 2, 'y': 3} == rv.get_json()
+        # Wait a some time
+        frozen_time.tick(delta=timedelta(days=40))
+        # Game should NOT be finished now
+        rv = client.get('/cron/')
+        assert {'data': 'success', 'finished': []} == rv.get_json()
+        assert 1 == session.query(db.BingoField).filter(db.BingoField.link == cookie_link).count()
+        # Wait a long time now (game is dead)
+        frozen_time.tick(delta=timedelta(days=100))
         rv = client.get('/cron/')
         assert {'data': 'success', 'finished': [cookie_link]} == rv.get_json()
         assert session.query(db.BingoField.finished).filter(db.BingoField.link == cookie_link).one()[0]

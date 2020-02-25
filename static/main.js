@@ -1,6 +1,7 @@
 $(function(){
     $("div.bingo-square").bind("taphold", tapholdHandler);
     $("#giveup").bind("taphold", giveupHandler);
+    $("#cookie").bind("taphold", cookieHandler);
 
     function tapholdHandler(event){
         event.preventDefault();
@@ -77,5 +78,15 @@ $(function(){
                 url: quit_url,
             });
         }
+    }
+
+    function cookieHandler(event){
+        event.preventDefault();
+        alert("Setze Cookie neu - Alle 60 Tage nötig. Punkte werden unter 10 sein. Vielleicht möchtest du ein neues Spiel starten.")
+        var cookie_url = event.target.dataset.cookieUrl;
+        if (cookie_url === undefined) {
+            cookie_url = event.target.parentNode.dataset.cookieUrl;
+        }
+        window.location = cookie_url;
     }
 });

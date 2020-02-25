@@ -166,11 +166,16 @@ def bingo_field(bingo_str):
         quit_url=url_for('.bingo_quit', bingo_str=bingo_str),
         submit_url_base=url_for('.bingo_field', bingo_str=bingo_str)+"submit/",
         authenticated=authenticated, squares=field, bingo=obj,
+        days=(get_now_plus_offset() - obj.start_time).days,
+        cookie_url=url_for('.bingo_cookie', bingo_str=bingo_str, bingo_uuid=obj.uuid),
     )
 
 
-@app.route('/<link:bingo_str>/hijack/<string:bingo_uuid>/')
-def bingo_hijack(bingo_str, bingo_uuid):
+@app.route('/<link:bingo_str>/cookie/<string:bingo_uuid>/')
+def bingo_cookie(bingo_str, bingo_uuid):
+    """
+    Used for resetting the cookie (by "reset cookie" button, shown after 60 days) and hijacking games, if you're an admin
+    """
     session = db.get_session()
     try:
         obj = session.query(db.BingoField).filter_by(link=bingo_str).one()
@@ -178,7 +183,7 @@ def bingo_hijack(bingo_str, bingo_uuid):
         abort(404)
 
     user_uuid = request.cookies.get("bingo_uuid")
-    if user_uuid is not None:
+    if user_uuid is not None and user_uuid != bingo_uuid:
         abort(400)
     else:
         if bingo_uuid == obj.uuid:
@@ -305,13 +310,7 @@ def cron():
     games = session.query(db.BingoField).filter(db.BingoField.finished.isnot(True))
     for game in games:
         timediff = get_now_plus_offset() - game.start_time
-        print(timediff.days)
-        if timediff.days > 93:  # Check if a game is older than 90 days, i.e. its cookie expired
-            # Cookie has expired, quit the game
-            game.finished = True
-            session.commit()
-            finished.append(game.link)
-        elif timediff.days > 7:  # Check if a game has no entries after 7 days, i.e. not really started
+        if timediff.days > 7:  # Check if a game has no entries after 7 days, i.e. not really started
             checked_fields = session.query(db.BingoSquares.check_time).filter(
                 db.BingoSquares.bingo_field == game,
                 db.BingoSquares.check_time.isnot(None)
@@ -322,5 +321,21 @@ def cron():
                 session.query(db.BingoSquares).filter_by(bingo_field=game).delete()
                 session.delete(game)
                 session.commit()
+        if timediff.days > 93:  # Check if a game is older than 90 days, i.e. its cookie might have expired
+            checked_fields = session.query(db.BingoSquares.check_time).filter(
+                db.BingoSquares.bingo_field == game,
+                db.BingoSquares.check_time.isnot(None)
+            )
+            actiondiff = 1000
+            for field in checked_fields:
+                cur = (get_now_plus_offset() - field.check_time).days
+                if cur < actiondiff:
+                    actiondiff = cur
+
+            if actiondiff > 93:
+                # No action for more than 3 months, quit the game
+                game.finished = True
+                session.commit()
+                finished.append(game.link)
 
     return jsonify(data="success", finished=finished)

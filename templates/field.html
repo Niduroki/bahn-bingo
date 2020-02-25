@@ -3,6 +3,9 @@
 <div id="info-row">
     {% if authenticated %}
         <button id="giveup" data-quit-url="{{quit_url}}" class="ui-btn ui-btn-inline">Aufgeben</button>
+        {% if days > 65 %}
+            <button id="cookie" data-cookie-url="{{cookie_url}}" class="ui-btn ui-btn-inline">Cookie neu setzen</button>
+        {% endif %}
     {% endif %}
     Start-Zeit: {{ bingo.start_time.strftime("%d.%m.%y %H:%M Uhr") }} – Spieler: {{ bingo.player_name }}
     {% if bingo.finished %}
