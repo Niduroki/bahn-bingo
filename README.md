@@ -1,7 +1,7 @@
 Bahn-Bingo
 ----------
 
-[![Build Status](https://drone.niduroki.net /api/badges/niduroki/bahn-bingo/status.svg)](https://drone.ts.unde.re/niduroki/bahn-bingo)
+[![Build Status](https://drone.niduroki.net/api/badges/niduroki/bahn-bingo/status.svg)](https://drone.niduroki.net/niduroki/bahn-bingo)
 
 Wir bitten um ihr Verständnis.
 
