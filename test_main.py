@@ -12,7 +12,7 @@ from main import app, db
 @pytest.fixture
 def client():
     db_fd, db_file = tempfile.mkstemp()
-    app.config['DATABASE'] = "sqlite://" + db_file
+    app.config['DATABASE'] = "sqlite:///db/test-" + db_file[5:] + ".db"
     app.config['TESTING'] = True
     with app.test_client() as client:
         with app.app_context():
