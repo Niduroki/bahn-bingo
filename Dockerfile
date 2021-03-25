@@ -6,10 +6,10 @@ COPY . /dbakel/
 
 RUN apt-get update && apt-get install -y gcc && pip install -r /dbakel/requirements.txt
 
-EXPOSE 80
+EXPOSE 8000
 
-RUN useradd dbakel && chown -R dbakel /dbakel
-USER dbakel
+RUN useradd uwsgi && chown -R uwsgi /dbakel
+USER uwsgi
 
 VOLUME ["/dbakel/db/"]
 

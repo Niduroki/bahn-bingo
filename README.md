@@ -9,7 +9,7 @@ Wir bitten um ihr Verständnis.
 
 ## Docker
 
-Expose port 80.
+Expose port 8000.
 Volume `/dbakel/db` für Datenbank.
 
 ### Update notes
