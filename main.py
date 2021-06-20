@@ -14,7 +14,7 @@ app = Flask(__name__)
 
 berlin = timezone("Europe/Berlin")
 
-bingo_cookie = "bingo_uuid"
+bingo_cookie_name = "bingo_uuid"
 
 class LinkConverter(BaseConverter):
     regex = r"[\w]{10}"
@@ -99,14 +99,14 @@ def check_bingo(session, field):
 def index():
     if request.method == "GET":
         session = db.get_session()
-        if request.cookies.get(bingo_cookie) is not None:
+        if request.cookies.get(bingo_cookie_name) is not None:
             try:
                 instance = session.query(db.BingoField).filter_by(
-                    uuid=request.cookies.get(bingo_cookie)
+                    uuid=request.cookies.get(bingo_cookie_name)
                 ).one()
             except NoResultFound:
                 response = make_response(url_for('.index'))
-                response.set_cookie(key=bingo_cookie, value="", expires=0)  # set cookie to expire
+                response.set_cookie(key=bingo_cookie_name, value="", expires=0)  # set cookie to expire
                 return response
             return redirect(url_for('.bingo_field', bingo_str=instance.link))
         else:
@@ -132,7 +132,7 @@ def index():
 
         response = make_response(redirect(url_for('.bingo_field', bingo_str=obj.link)))
         response.set_cookie(
-            key=bingo_cookie, value=obj.uuid, max_age=3600*24*90,  # 90 days
+            key=bingo_cookie_name, value=obj.uuid, max_age=3600*24*90,  # 90 days
         )
         return response
 
@@ -145,7 +145,7 @@ def bingo_field(bingo_str):
     except NoResultFound:
         abort(404)
 
-    user_uuid = request.cookies.get(bingo_cookie)
+    user_uuid = request.cookies.get(bingo_cookie_name)
     if user_uuid is not None and user_uuid == obj.uuid:
         authenticated = True
     else:
@@ -154,7 +154,7 @@ def bingo_field(bingo_str):
     if authenticated and obj.finished:
         # Sanity check: Bingo field is done/has been reaped – reset cookie
         response = make_response(redirect('/'))
-        response.set_cookie(key=bingo_cookie, value="", expires=0)  # set cookie to expire
+        response.set_cookie(key=bingo_cookie_name, value="", expires=0)  # set cookie to expire
         return response
 
     squares = session.query(db.BingoSquares).filter_by(bingo_field=obj).all()
@@ -183,14 +183,14 @@ def bingo_cookie(bingo_str, bingo_uuid):
     except NoResultFound:
         abort(404)
 
-    user_uuid = request.cookies.get(bingo_cookie)
+    user_uuid = request.cookies.get(bingo_cookie_name)
     if user_uuid is not None and user_uuid != bingo_uuid:
         abort(400)
     else:
         if bingo_uuid == obj.uuid:
             response = make_response(redirect(url_for('.bingo_field', bingo_str=obj.link)))
             response.set_cookie(
-                key=bingo_cookie, value=obj.uuid, max_age=3600 * 24 * 90,  # 90 days
+                key=bingo_cookie_name, value=obj.uuid, max_age=3600 * 24 * 90,  # 90 days
             )
             return response
         else:
@@ -206,7 +206,7 @@ def bingo_quit(bingo_str):
         abort(404)
 
     # authentication via uuid-cookie
-    user_uuid = request.cookies.get(bingo_cookie)
+    user_uuid = request.cookies.get(bingo_cookie_name)
     if user_uuid is not None and user_uuid == obj.uuid:
         authenticated = True
     else:
@@ -219,7 +219,7 @@ def bingo_quit(bingo_str):
     session.commit()
 
     response = make_response(jsonify(data="success"))
-    response.set_cookie(key=bingo_cookie, value="", expires=0)  # set cookie to expire
+    response.set_cookie(key=bingo_cookie_name, value="", expires=0)  # set cookie to expire
     return response
 
 
@@ -235,7 +235,7 @@ def bingo_submit(bingo_str, x, y):
         abort(404)
 
     # check authentication via uuid-cookie
-    user_uuid = request.cookies.get(bingo_cookie)
+    user_uuid = request.cookies.get(bingo_cookie_name)
     if not (user_uuid is not None and user_uuid == field.uuid):
         abort(403)
 
@@ -276,7 +276,7 @@ def bingo_undo(bingo_str, x, y):
         abort(404)
 
     # check authentication via uuid-cookie
-    user_uuid = request.cookies.get(bingo_cookie)
+    user_uuid = request.cookies.get(bingo_cookie_name)
     if not (user_uuid is not None and user_uuid == field.uuid):
         abort(403)
 
