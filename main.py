@@ -117,6 +117,8 @@ def index():
     elif request.method == "POST":
         try:
             player_name = request.form['player_name']
+            if player_name == "":  # Check for empty name (will be caught on the frontend, too)
+                return redirect('/')
         except KeyError:
             return redirect('/')
 

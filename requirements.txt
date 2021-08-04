@@ -1,5 +1,5 @@
 Flask==2.0.1
-sqlalchemy==1.4.20
+sqlalchemy==1.4.22
 uwsgi==2.0.19.1
 pytz==2021.1
 pytest==6.2.4
