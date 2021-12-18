@@ -1,21 +1,20 @@
 FROM python:3-alpine
 
-RUN apk add --no-cache gcc g++ libc-dev linux-headers
+RUN mkdir /app/
+WORKDIR /app/
 
-RUN mkdir /dbakel/
-WORKDIR /dbakel/
-COPY . /dbakel/
-
-ENV VIRTUAL_ENV=/dbakel/venv
+ENV VIRTUAL_ENV=/app/venv
 RUN python -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+RUN adduser -S app && chown -R app /app
+USER app
+
 EXPOSE 8000
 
-RUN adduser -S uwsgi && chown -R uwsgi /dbakel
-USER uwsgi
-RUN pip install --no-cache-dir -r /dbakel/requirements.txt
+COPY . /app/
+RUN pip install --no-cache-dir -r /app/requirements.txt gunicorn
 
-VOLUME ["/dbakel/db/"]
+VOLUME ["/app/db/"]
 
-CMD [ "uwsgi", "dbakel-py.ini"]
+CMD [ "gunicorn", "-b", "0.0.0.0:8000", "main:app"]
