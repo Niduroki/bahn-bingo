@@ -17,4 +17,4 @@ RUN pip install --no-cache-dir -r /app/requirements.txt gunicorn
 
 VOLUME ["/app/db/"]
 
-CMD [ "gunicorn", "-b", "0.0.0.0:8000", "main:app"]
+CMD [ "gunicorn", "-b", "[::]:8000", "main:app"]
