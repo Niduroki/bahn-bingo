@@ -1,5 +1,5 @@
-Flask==2.0.3
-sqlalchemy==1.4.32
-pytz==2021.3
-pytest==7.1.1
+Flask==2.1.2
+sqlalchemy==1.4.36
+pytz==2022.1
+pytest==7.1.2
 freezegun==1.2.1
