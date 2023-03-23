@@ -1,21 +1,26 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy import create_engine, ForeignKey
+from sqlalchemy.orm import sessionmaker, relationship, DeclarativeBase, Mapped, mapped_column
 from flask import current_app
+from datetime import datetime
+from typing import List
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class BingoField(Base):
     __tablename__ = "bingofield"
 
-    id = Column(Integer, primary_key=True)
-    link = Column(String)
-    uuid = Column(String)
-    player_name = Column(String)
-    start_time = Column(DateTime)
-    finished = Column(Boolean)
-    score = Column(Integer)  # 1.000.000/minutes taken
+    id: Mapped[int] = mapped_column(primary_key=True)
+    link: Mapped[str]
+    uuid: Mapped[str]
+    player_name: Mapped[str]
+    start_time: Mapped[datetime]
+    finished: Mapped[bool]
+    score: Mapped[int]  # 1.000.000/minutes taken
+
+    squares: Mapped[List['BingoSquares']] = relationship(back_populates="bingo_field")
 
     def __repr__(self):
         return f"ID: {self.id}, Game by {self.player_name} with link {self.link}"
@@ -24,21 +29,18 @@ class BingoField(Base):
 class BingoSquares(Base):
     __tablename__ = "bingosquares"
 
-    id = Column(Integer, primary_key=True)
-    bingo_field_id = Column(Integer, ForeignKey('bingofield.id'))
-    content = Column(String)
-    check_time = Column(DateTime)
-    x_position = Column(Integer)
-    y_position = Column(Integer)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    bingo_field_id: Mapped[int] = mapped_column(ForeignKey('bingofield.id'))
+    content: Mapped[str]
+    check_time: Mapped[datetime]
+    x_position: Mapped[int]
+    y_position: Mapped[int]
 
     bingo_field = relationship("BingoField", back_populates="squares")
 
     def __repr__(self):
         return f"ID: {self.id}, for field id: {self.bingo_field_id}, pos: " + \
             f"{self.x_position}x{self.y_position}, check_time {self.check_time}"
-
-
-BingoField.squares = relationship("BingoSquares", back_populates="bingo_field")
 
 
 def get_session():
